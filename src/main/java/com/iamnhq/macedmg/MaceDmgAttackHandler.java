@@ -1,5 +1,7 @@
 package com.iamnhq.macedmg;
 
+import java.lang.reflect.Constructor;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -20,19 +22,21 @@ import net.neoforged.neoforge.client.event.InputEvent;
 
 @EventBusSubscriber(modid = MaceDmgMod.MOD_ID, value = Dist.CLIENT)
 public class MaceDmgAttackHandler {
-
     private static int lastTriggerTick = -1;
     private static int pendingAttackTargetId = -1;
     private static int attackAtTick = -1;
     private static int pendingSwapBackSlot = -1;
     private static int swapBackAtTick = -1;
     private static boolean isPerformingScheduledAttack = false;
+    private static Constructor<?> posCtorWithCollision;
+    private static boolean checkedPosCtorWithCollision;
 
     @SubscribeEvent
     public static void onAttackEntity(InputEvent.InteractionKeyMappingTriggered event) {
         if (!MaceDmgMod.enabled) return;
         if (isPerformingScheduledAttack) return;
         if (!event.isAttack()) return;
+        if (pendingAttackTargetId >= 0 || pendingSwapBackSlot >= 0) return;
 
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -76,14 +80,11 @@ public class MaceDmgAttackHandler {
             player.getInventory().selected = maceSlot;
             mc.getConnection().send(new ServerboundSetCarriedItemPacket(maceSlot));
 
-            // 2. Fake Fall
-            doFakeFall(mc, player);
-
-            // 3. Attack next tick to avoid re-entrant packet flow in the same callback.
+            // 2. Attack next tick to avoid re-entrant packet flow in the same callback.
             pendingAttackTargetId = entityHitResult.getEntity().getId();
             attackAtTick = player.tickCount + 1;
 
-            // 4. Swap back after scheduled attack.
+            // 3. Swap back after scheduled attack.
             pendingSwapBackSlot = prevSlot;
             swapBackAtTick = player.tickCount + 2;
         }
@@ -110,6 +111,10 @@ public class MaceDmgAttackHandler {
                 var target = mc.level.getEntity(targetId);
                 if (target instanceof LivingEntity living && living.isAlive()) {
                     isPerformingScheduledAttack = true;
+
+                    // Wurst-like timing: fake fall immediately before the actual hit packet.
+                    doFakeFall(mc, player);
+
                     mc.gameMode.attack(player, target);
                     player.swing(InteractionHand.MAIN_HAND);
                     isPerformingScheduledAttack = false;
@@ -117,7 +122,21 @@ public class MaceDmgAttackHandler {
             }
         }
 
+        // Safety timeout to avoid getting stuck in pending states.
+        if (pendingAttackTargetId >= 0 && attackAtTick >= 0 && player.tickCount > attackAtTick + 3) {
+            pendingAttackTargetId = -1;
+            attackAtTick = -1;
+        }
+
         if (pendingSwapBackSlot < 0) return;
+
+
+        if (swapBackAtTick >= 0 && player.tickCount > swapBackAtTick + 5) {
+            pendingSwapBackSlot = -1;
+            swapBackAtTick = -1;
+            return;
+        }
+
         if (player.tickCount < swapBackAtTick) return;
 
         int slot = pendingSwapBackSlot;
@@ -132,7 +151,7 @@ public class MaceDmgAttackHandler {
     }
 
     private static void doFakeFall(Minecraft mc, LocalPlayer player) {
-        // Match Wurst MaceDMG packet pattern.
+        // Match Wurst MaceDMG packet pattern: 4x0, sqrt(500), 0.
         for (int i = 0; i < 4; i++) {
             sendFakeY(mc, player, 0.0);
         }
@@ -141,6 +160,32 @@ public class MaceDmgAttackHandler {
     }
 
     private static void sendFakeY(Minecraft mc, LocalPlayer player, double yOffset) {
+        if (!checkedPosCtorWithCollision) {
+            checkedPosCtorWithCollision = true;
+            try {
+                posCtorWithCollision = ServerboundMovePlayerPacket.Pos.class.getConstructor(
+                        double.class, double.class, double.class, boolean.class, boolean.class);
+            } catch (ReflectiveOperationException ignored) {
+                posCtorWithCollision = null;
+            }
+        }
+
+        if (posCtorWithCollision != null) {
+            try {
+                Object packet = posCtorWithCollision.newInstance(
+                        player.getX(),
+                        player.getY() + yOffset,
+                        player.getZ(),
+                        false,
+                        player.horizontalCollision
+                );
+                mc.getConnection().send((ServerboundMovePlayerPacket) packet);
+                return;
+            } catch (ReflectiveOperationException ignored) {
+                posCtorWithCollision = null;
+            }
+        }
+
         mc.getConnection().send(new ServerboundMovePlayerPacket.Pos(
                 player.getX(),
                 player.getY() + yOffset,
