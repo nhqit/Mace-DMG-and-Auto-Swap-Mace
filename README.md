@@ -38,8 +38,8 @@ This repository is currently configured and tested around the 1.21.1 toolchain. 
 
 ## Download
 
-- Repository: https://github.com/nhqit/Mace-DMG-and-Auto-Swap-Mace
-- Releases page: https://github.com/nhqit/Mace-DMG-and-Auto-Swap-Mace/releases
+- Repository: https://github.com/nhqit/Mace_DMG_Swap
+- Releases page: https://github.com/nhqit/Mace_DMG_Swap/releases
 - Built jar in repository: `releases/macedmgswap-1.0.0.jar`
 
 ## Installation
