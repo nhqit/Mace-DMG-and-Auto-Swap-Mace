@@ -1,0 +1,151 @@
+package com.iamnhq.macedmg;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+
+@EventBusSubscriber(modid = MaceDmgMod.MOD_ID, value = Dist.CLIENT)
+public class MaceDmgAttackHandler {
+
+    private static int lastTriggerTick = -1;
+    private static int pendingAttackTargetId = -1;
+    private static int attackAtTick = -1;
+    private static int pendingSwapBackSlot = -1;
+    private static int swapBackAtTick = -1;
+    private static boolean isPerformingScheduledAttack = false;
+
+    @SubscribeEvent
+    public static void onAttackEntity(InputEvent.InteractionKeyMappingTriggered event) {
+        if (!MaceDmgMod.enabled) return;
+        if (isPerformingScheduledAttack) return;
+        if (!event.isAttack()) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.getConnection() == null) return;
+        if (mc.gameMode == null) return;
+
+        // Only run when this click is actually targeting an entity hit.
+        if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.ENTITY) return;
+        if (!(mc.hitResult instanceof EntityHitResult entityHitResult)) return;
+        if (!(entityHitResult.getEntity() instanceof LivingEntity living) || !living.isAlive()) return;
+
+        // Guard against duplicate event fires in the same tick.
+        if (player.tickCount == lastTriggerTick) return;
+        lastTriggerTick = player.tickCount;
+
+        ItemStack mainHand = player.getMainHandItem();
+        boolean holdingMace = mainHand.is(Items.MACE);
+        boolean holdingWeapon = mainHand.getItem() instanceof SwordItem || mainHand.getItem() instanceof AxeItem;
+
+        int maceSlot = -1;
+        if (!holdingMace && holdingWeapon) {
+            for (int i = 0; i < 9; i++) {
+                if (player.getInventory().getItem(i).is(Items.MACE)) {
+                    maceSlot = i;
+                    break;
+                }
+            }
+        }
+
+        if (holdingMace) {
+            doFakeFall(mc, player);
+            // Let original attack proceed normally
+        } else if (maceSlot != -1) {
+            event.setCanceled(true);
+            event.setSwingHand(false);
+
+            int prevSlot = player.getInventory().selected;
+            if (prevSlot == maceSlot) return;
+
+            // 1. Swap to Mace before vanilla attack packet is sent
+            player.getInventory().selected = maceSlot;
+            mc.getConnection().send(new ServerboundSetCarriedItemPacket(maceSlot));
+
+            // 2. Fake Fall
+            doFakeFall(mc, player);
+
+            // 3. Attack next tick to avoid re-entrant packet flow in the same callback.
+            pendingAttackTargetId = entityHitResult.getEntity().getId();
+            attackAtTick = player.tickCount + 1;
+
+            // 4. Swap back after scheduled attack.
+            pendingSwapBackSlot = prevSlot;
+            swapBackAtTick = player.tickCount + 2;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientTickPost(ClientTickEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (!MaceDmgMod.enabled || player == null || mc.getConnection() == null) {
+            pendingAttackTargetId = -1;
+            attackAtTick = -1;
+            pendingSwapBackSlot = -1;
+            swapBackAtTick = -1;
+            return;
+        }
+
+        if (pendingAttackTargetId >= 0 && player.tickCount >= attackAtTick) {
+            int targetId = pendingAttackTargetId;
+            pendingAttackTargetId = -1;
+            attackAtTick = -1;
+
+            if (mc.level != null && mc.gameMode != null) {
+                var target = mc.level.getEntity(targetId);
+                if (target instanceof LivingEntity living && living.isAlive()) {
+                    isPerformingScheduledAttack = true;
+                    mc.gameMode.attack(player, target);
+                    player.swing(InteractionHand.MAIN_HAND);
+                    isPerformingScheduledAttack = false;
+                }
+            }
+        }
+
+        if (pendingSwapBackSlot < 0) return;
+        if (player.tickCount < swapBackAtTick) return;
+
+        int slot = pendingSwapBackSlot;
+        pendingSwapBackSlot = -1;
+        swapBackAtTick = -1;
+
+        if (slot < 0 || slot > 8) return;
+        if (player.getInventory().selected == slot) return;
+
+        player.getInventory().selected = slot;
+        mc.getConnection().send(new ServerboundSetCarriedItemPacket(slot));
+    }
+
+    private static void doFakeFall(Minecraft mc, LocalPlayer player) {
+        // Match Wurst MaceDMG packet pattern.
+        for (int i = 0; i < 4; i++) {
+            sendFakeY(mc, player, 0.0);
+        }
+        sendFakeY(mc, player, Math.sqrt(500)); // ~22.36 blocks "above" -> large fall bonus
+        sendFakeY(mc, player, 0.0);            // "land" at player Y
+    }
+
+    private static void sendFakeY(Minecraft mc, LocalPlayer player, double yOffset) {
+        mc.getConnection().send(new ServerboundMovePlayerPacket.Pos(
+                player.getX(),
+                player.getY() + yOffset,
+                player.getZ(),
+                false
+        ));
+    }
+}
