@@ -20,8 +20,8 @@ public class MaceDmgOverlay {
         int screenWidth = mc.getWindow().getGuiScaledWidth();
 
         String text = MaceDmgMod.enabled
-                ? "\u00a7a[MaceDMG+Swap] ON"   // green
-                : "\u00a7c[MaceDMG+Swap] OFF";  // red
+            ? "\u00a7a[MaceDMGSwap] ON"   // green
+            : "\u00a7c[MaceDMGSwap] OFF";  // red
 
         // Draw in top-right corner
         int textWidth = mc.font.width(text);

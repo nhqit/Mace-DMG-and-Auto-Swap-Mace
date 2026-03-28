@@ -26,7 +26,7 @@ public class MaceDmgKeyHandler {
 
         if (pressed && !wasPressed) {
             MaceDmgMod.enabled = !MaceDmgMod.enabled;
-            MaceDmgMod.LOGGER.info("[MaceDMG] {}",
+            MaceDmgMod.LOGGER.info("[MaceDMGSwap] {}",
                     MaceDmgMod.enabled ? "ENABLED" : "DISABLED");
         }
         wasPressed = pressed;

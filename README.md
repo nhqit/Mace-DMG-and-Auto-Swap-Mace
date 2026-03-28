@@ -1,6 +1,6 @@
-# Mace-DMG-and-Auto-Swap-Mace
+# MaceDMGSwap
 
-Mace-DMG-and-Auto-Swap-Mace is a small NeoForge client-side mod for Minecraft 1.21.x that boosts mace attacks by simulating fall height and can automatically swap from a sword or axe to a mace for the hit.
+MaceDMGSwap is a small NeoForge client-side mod for Minecraft 1.21.x that boosts mace attacks by simulating fall height and can automatically swap from a sword or axe to a mace for the hit.
 
 The project is inspired by the MaceDMG behavior found in some utility clients, but implemented here as a standalone NeoForge mod with a simple toggle and lightweight on-screen status display.
 
@@ -40,7 +40,7 @@ This repository is currently configured and tested around the 1.21.1 toolchain. 
 
 - Repository: https://github.com/nhqit/Mace-DMG-and-Auto-Swap-Mace
 - Releases page: https://github.com/nhqit/Mace-DMG-and-Auto-Swap-Mace/releases
-- Built jar in repository: `releases/macedmg-1.0.0.jar`
+- Built jar in repository: `releases/macedmgswap-1.0.0.jar`
 
 ## Installation
 

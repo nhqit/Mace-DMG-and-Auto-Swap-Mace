@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 @Mod(MaceDmgMod.MOD_ID)
 public class MaceDmgMod {
 
-    public static final String MOD_ID = "macedmg";
+    public static final String MOD_ID = "macedmgswap";
     public static final Logger LOGGER = LogUtils.getLogger();
 
     /** Whether the MaceDMG feature is currently active */
@@ -21,6 +21,6 @@ public class MaceDmgMod {
         NeoForge.EVENT_BUS.register(MaceDmgKeyHandler.class);
         NeoForge.EVENT_BUS.register(MaceDmgAttackHandler.class);
         NeoForge.EVENT_BUS.register(MaceDmgOverlay.class);
-        LOGGER.info("[MaceDMG] Mod loaded. Press V to toggle.");
+        LOGGER.info("[MaceDMGSwap] Mod loaded. Press V to toggle.");
     }
 }
