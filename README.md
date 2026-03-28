@@ -1,32 +1,61 @@
 # Mace DMG Swap
 
-MaceDMGSwap is a small NeoForge client-side mod for Minecraft 1.21.x that boosts mace attacks by simulating fall height and can automatically swap from a sword or axe to a mace for the hit.
+MaceDMGSwap is a clean NeoForge PvP mod for Minecraft 1.21.1 that combines fake-fall mace damage with automatic weapon swapping. It is built for players who want mace-level burst damage without manually switching off a sword or axe every hit.
 
-The project is inspired by the MaceDMG behavior found in some utility clients, but implemented here as a standalone NeoForge mod with a simple toggle and lightweight on-screen status display.
+The mod is designed to stay fast, minimal, and practical: no bloated interface, no setup screen, and no extra conditions before it does its job.
+
+## What It Does
+
+When enabled, the mod boosts mace hits by sending a fake-fall packet sequence before the attack. If you are holding a sword or axe and you have a mace in your hotbar, it will automatically:
+
+1. detect the target,
+2. swap to the mace,
+3. apply the fake-fall sequence,
+4. perform the attack,
+5. swap back to your original slot.
+
+This gives sword and axe engagements access to mace-style burst damage with a seamless swap flow.
+
+## Highlights
+
+- Toggleable with keybind. Default key: `V`
+- Works with sword and axe
+- Detects mace only in the hotbar, slots `1-9`
+- Automatic StunSlam-style flow when attacking with an axe
+- Instant `swap -> attack -> swap back`
+- No extra conditions or complex setup required
+- Clean and lightweight implementation
+- No unnecessary UI
+- PvP-focused behavior
 
 ## Features
 
-- Simulates fall height before a mace hit to increase damage.
-- Automatically swaps to a mace from the hotbar when attacking with a sword or axe.
-- Swaps back to the original hotbar slot after the attack.
-- Includes an in-game toggle key.
-- Shows a small status overlay so you can tell whether the mod is enabled.
-- Works entirely on the client side.
+- Fake-fall mace damage boost
+- Automatic hotbar mace swap
+- Automatic return to the previous slot after the hit
+- Direct mace support when you are already holding a mace
+- Lightweight HUD status text
+- Client-side keybind toggle
 
 ## How It Works
 
-When the mod is enabled and you attack a living entity:
+### If You Are Holding a Mace
 
-- If you are already holding a mace, the mod sends a short fake movement packet pattern before the hit.
-- If you are holding a sword or axe and a mace exists in your hotbar, the mod cancels the original input, switches to the mace, sends the fake-fall packets, performs the attack on the next client tick, and then switches back.
+The mod sends a short fake-fall packet pattern right before the hit so the mace attack gets increased damage.
 
-The fake-fall pattern is based on the same general idea used by MaceDMG implementations: the client sends movement packets that make the server believe the player fell before the hit, which increases mace damage.
+### If You Are Holding a Sword or Axe
+
+If a mace is found in the hotbar, the mod intercepts the attack input and runs the full swap sequence automatically. The original weapon slot is restored immediately after the hit.
+
+### Hotbar-Only Detection
+
+The mod only looks for a mace in the hotbar. If your mace is not in slots `1-9`, auto-swap will not trigger.
 
 ## Controls
 
-- `V`: Toggle the mod on or off
+- `V`: Enable or disable MaceDMGSwap
 
-When toggled, the game log will print either `ENABLED` or `DISABLED`.
+The mod also logs its current state in-game as `ENABLED` or `DISABLED`.
 
 ## Requirements
 
@@ -34,7 +63,7 @@ When toggled, the game log will print either `ENABLED` or `DISABLED`.
 - NeoForge 21.1.x
 - Java 21
 
-This repository is currently configured and tested around the 1.21.1 toolchain. If you want to target later 1.21.x NeoForge builds, additional compatibility work may be required because some client APIs changed between minor versions.
+This repository is currently configured around the 1.21.1 NeoForge toolchain.
 
 ## Download
 
@@ -44,46 +73,40 @@ This repository is currently configured and tested around the 1.21.1 toolchain. 
 
 ## Installation
 
-1. Build the mod or download the compiled jar.
-2. Put the jar into your Minecraft `mods` folder.
-3. Launch Minecraft with NeoForge.
+1. Download the mod jar.
+2. Put it in your Minecraft `mods` folder.
+3. Launch Minecraft with NeoForge 1.21.1.
 4. Join a world.
-5. Press `V` to enable the mod.
+5. Press `V` to toggle the mod.
 
 ## Usage
 
-### Direct Mace Use
+### Mace Mode
 
 1. Hold a mace.
 2. Enable the mod.
-3. Attack a living target.
+3. Hit a living target.
 
-The mod will apply the fake-fall packet sequence before the hit.
+The fake-fall sequence is applied before the attack.
 
-### Auto Swap Mode
+### Swap Mode
 
-1. Put a mace somewhere in your hotbar.
+1. Put a mace in the hotbar.
 2. Hold a sword or axe.
 3. Enable the mod.
 4. Attack a living target.
 
-The mod will:
-
-1. intercept the attack input,
-2. swap to the mace,
-3. send the fake-fall packets,
-4. perform the attack,
-5. swap back to your original weapon slot.
+The mod will swap to the mace, hit, and return to your original slot automatically.
 
 ## Build From Source
 
-Clone the repository and run:
+Run:
 
 ```powershell
 .\gradlew.bat build
 ```
 
-The output jar will be generated in:
+The generated artifacts will appear in:
 
 ```text
 build/libs/
@@ -92,16 +115,16 @@ build/libs/
 ## Project Structure
 
 - `src/main/java/com/iamnhq/macedmg/MaceDmgMod.java`: Mod entry point and event registration
-- `src/main/java/com/iamnhq/macedmg/MaceDmgKeyHandler.java`: Toggle key handling
-- `src/main/java/com/iamnhq/macedmg/MaceDmgAttackHandler.java`: Attack interception, fake-fall logic, scheduled attack, and swap-back
-- `src/main/java/com/iamnhq/macedmg/MaceDmgOverlay.java`: Simple HUD overlay
+- `src/main/java/com/iamnhq/macedmg/MaceDmgKeyHandler.java`: Keybind toggle logic
+- `src/main/java/com/iamnhq/macedmg/MaceDmgAttackHandler.java`: Fake-fall, target detection, swap handling, and attack scheduling
+- `src/main/java/com/iamnhq/macedmg/MaceDmgOverlay.java`: Minimal HUD status text
 
 ## Notes
 
-- This is a client-side combat behavior mod. Server behavior may vary depending on server rules, plugins, validation logic, or anti-cheat systems.
-- The mod is intended for environments where you understand and accept the gameplay and server-side implications.
-- The implementation focuses on lightweight behavior rather than a full configuration UI.
+- This is a client-side combat mod.
+- Server behavior can vary depending on validation, anti-cheat, or PvP rules.
+- The mod is intentionally minimal and does not include a config GUI.
 
 ## License
 
-This project is released under the MIT License.
+Released under the MIT License.
