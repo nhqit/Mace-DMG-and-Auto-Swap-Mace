@@ -1,4 +1,4 @@
-# Mace DMG Swap
+# MaceDMGSwap
 
 MaceDMGSwap is a clean NeoForge PvP mod for Minecraft 1.21.1 that combines fake-fall mace damage with automatic weapon swapping. It is built for players who want mace-level burst damage without manually switching off a sword or axe every hit.
 
@@ -69,7 +69,7 @@ This repository is currently configured around the 1.21.1 NeoForge toolchain.
 
 - Repository: https://github.com/nhqit/Mace_DMG_Swap
 - Releases page: https://github.com/nhqit/Mace_DMG_Swap/releases
-- Built jar in repository: `releases/macedmgswap-1.0.0.jar`
+- Download the latest jar from the Releases page.
 
 ## Installation
 
@@ -124,6 +124,7 @@ build/libs/
 - This is a client-side combat mod.
 - Server behavior can vary depending on validation, anti-cheat, or PvP rules.
 - The mod is intentionally minimal and does not include a config GUI.
+- Use this mod only on servers or worlds where this kind of combat assistance is allowed.
 
 ## License
 
