@@ -1,10 +1,15 @@
-<p align="center">
-	<img src="logo.jpg" alt="MaceDMGSwap Logo" width="220" />
-</p>
+<table>
+	<tr>
+		<td>
+			<img src="logo.jpg" alt="MaceDMGSwap Logo" width="84" />
+		</td>
+		<td>
+			<h1>Mace DMG Swap</h1>
+		</td>
+	</tr>
+</table>
 
-# MaceDMGSwap
-
-MaceDMGSwap is a lightweight NeoForge combat mod for Minecraft 1.21.1.
+Mace DMG Swap is a lightweight NeoForge combat mod for Minecraft 1.21.1.
 It combines two ideas into one fast workflow:
 
 - Wurst-style mace damage spoofing (fake fall packets)
