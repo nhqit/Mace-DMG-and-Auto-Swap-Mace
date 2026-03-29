@@ -1,3 +1,7 @@
+<p align="center">
+	<img src="logo.jpg" alt="MaceDMGSwap Logo" width="220" />
+</p>
+
 # MaceDMGSwap
 
 MaceDMGSwap is a lightweight NeoForge combat mod for Minecraft 1.21.1.
