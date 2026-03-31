@@ -10,6 +10,8 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 @EventBusSubscriber(modid = MaceDmgMod.MOD_ID, value = Dist.CLIENT)
 public class MaceDmgOverlay {
+    private static final Component OVERLAY_ON = Component.literal("\u00a7a[MaceDMGSwap] ON");
+    private static final Component OVERLAY_OFF = Component.literal("\u00a7c[MaceDMGSwap] OFF");
 
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
@@ -19,14 +21,12 @@ public class MaceDmgOverlay {
         GuiGraphics graphics = event.getGuiGraphics();
         int screenWidth = mc.getWindow().getGuiScaledWidth();
 
-        String text = MaceDmgMod.enabled
-            ? "\u00a7a[MaceDMGSwap] ON"   // green
-            : "\u00a7c[MaceDMGSwap] OFF";  // red
+        Component text = MaceDmgMod.enabled ? OVERLAY_ON : OVERLAY_OFF;
 
         // Draw in top-right corner
         int textWidth = mc.font.width(text);
         graphics.drawString(mc.font,
-            Component.literal(text),
+            text,
             screenWidth - textWidth - 4,
             4,
             0xFFFFFF
